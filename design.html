@@ -1,0 +1,248 @@
+﻿<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+  <link type="text/css" rel="stylesheet" href="style.css"> 
+  <meta name="Author" content="Liu Chao">
+  <title>LCUI 设计文档</title>
+</head>
+
+<body>
+
+<h1 align=center>
+  LCUI 设计文档
+</h1>
+
+<h3 align=center>
+  &copy; 2012 - 2013 刘超
+    (<a href="lc-soft@live.cn">lc-soft@live.cn</a>)<br>
+  &copy; 2012 - 2013 LCUI 开发团队
+    (<a href="http://www.lcui.org">www.lcui.org</a>)
+</h3>
+	<hr>
+
+<center>
+<table width="70%">
+<tr><td>
+	<p>本文档主要讲述了LCUI各个功能的实现方法及原理，如果你是为了hack或扩展此函数库，请仔细阅读。</p>
+<h2>图层</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/LCUI_Graph.c</li>
+<li>src/LCUI_GraphLayer.c</li>
+</ul>
+<p>LCUI中的图形界面由若干个部件组成，每个部件都有一个图层用于存放部件的位图，对部件的绘制操作都是针对该部件图层进行的。</p>
+<p>图层通过上下叠加的方式组成整个GUI界面，如下图所示：</p>
+<p><a href="images/widget_graph_layers.png">
+	<img class="alignnone" title="" src="images/widget_graph_layers.png" 
+	alt="" width="480" height="600">
+</a></p>
+<p>在内存中，图层就是一段内存空间里的数据，这段内存空间，用于记录图层的各个属性（例如尺寸、坐标），以及各个像素点的RGBA值。</p>
+<p>其中RGB表示的是红(Red)、绿(Green)、蓝(Blue)，这三种颜色被称为“三原色”，原色是指不能通过其他颜色的混合调配而得出的“基本色”，以不同比例将原色混合，可以产生出其他的新颜色，例如：当RGB都为0时，表示的是纯黑色。你可以打开 颜色编辑器 来测试效果，如下图所示：</p><p><a href="images/color-selector.png">
+	<img class="alignnone" title="" src="images/color-selector.png" 
+	alt="" width="569" height="386">
+</a></p>
+<p>而RGBA中的A表示的是Alpha，即该像素点的透明度，通常在图像的叠加混合处理时用得到它，但在最终图形输出时，这个Alpha没什么用。</p>
+<p>LCUI中的图层默认是采用RGB888色彩模式存储RGB数据的，即R、G、B各占1个字节（8位），再包括Alpha，一个像素点的数据总共占4个字节，假设有个带Alpha通道的1280x800尺寸的图层，那么它的像素数据占用的内存就是4x1280x800=4096000Byte=4000KB≈3.9MB。</p>
+<p>由于每个原色占1个字节，1个字节能储存0~255范围的数，因此，每个原色都有256种亮度，这样算来，每个像素点一共可以显示256*256*256=16777216种颜色，但这些颜色只能在支持24位或32位色彩的屏幕上完全显示，对于18位（RGB666）、16位(RGB565)、15位（RGB555）的屏幕，色彩会有失真。</p>
+<p>以后会考虑为图层添加调色板，并支持其他色彩模式，以减少内存占用，用于保存图层像素数据的LCUI_Graph结构体，也可能会进行调整。</p>
+<h2>图形输出</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/output/graph_display.c</li>
+<li>src/output/framebuffer.c</li>
+<li>src/output/win32.c</li>
+</ul>
+<p>LCUI在初始化时会获取屏幕信息，例如：尺寸、色彩模式等，并创建一个与屏幕尺寸相当的根图层，程序创建的部件的图层默认是它的子图层。</p>
+
+<p>
+屏幕上的图形更新由单独的GUI线程完成，该线程在LCUI初始化时创建。</p>
+<p>该线程的工作流程是：先更新屏幕上显示的鼠标游标的坐标，然后处理部件消息，之后将各个部件中记录的无效区域转移至根记录中，最后根据记录的无效区域，对屏幕内显示的图形进行重绘，重绘完后会删除这个无效区域记录。</p>
+<p>若在处理完部件消息后没有无效区域记录，则会延时等待数毫秒，以降低程序的CPU使用率，这些工作是往复循环执行的。目前看来，这种降低CPU使用率的方案有些不妥，以后会考虑采用其它更好的方案。</p>
+<p>GUI线程在重绘时，会重新获取无效区域内的图形，先记录出现在该区域内的图层，然后排除被其它图层完全遮挡的图层，最后根据图层的堆叠顺序，进行叠加，叠加完后就会得到最终的图形，最后写入到帧缓冲里，以完成无效区域的重绘。这一过程可以称之为“渲染”。</p>
+<p><a href="images/invalid-area-render.png">
+	<img class="alignnone" title="无效区域的重绘" src="images/invalid-area-render.png" 
+	alt="" width="722" height="324">
+</a></p>
+<i>注：虚线表示的矩形是无效区域（脏矩形），GUI线程只会将与这个区域相交的图层进行叠加。</i>
+<h3>LCUI 如何让屏幕显示图形？</h3>
+<p>在linux系统下，LCUI是直接写帧缓冲实现图形显示的，那么，帧缓冲是什么？可参考以下介绍内容（摘自互联网）：</p>
+<p>帧缓冲（framebuffer）是Linux为显示设备提供的一个接口，把显存抽象后的一种设备，他允许上层应用程序在图形模式下直接对显示缓冲区进行读写操作。这种操作是抽象的，统一的。用户不必关心物理显存的位置、换页机制等等具体细节。这些都是由Framebuffer设备驱动来完成的。</p>
+<p>Linux FrameBuffer 本质上只是提供了对图形设备的硬件抽象，在开发者看来，FrameBuffer 是一块显示缓存，往显示缓存中写入特定格式的数据就意味着向屏幕输出内容。所以说FrameBuffer就是一块白板。例如对于初始化为16 位色的FrameBuffer来说，FrameBuffer中的两个字节代表屏幕上一个点，从上到下，从左至右，屏幕位置与内存地址是顺序的线性关系。</p>
+<p>帧缓存可以在系统存储器(内存)的任意位置，视频控制器通过访问帧缓存来刷新屏幕。 帧缓存也叫刷新缓存 Frame buffer 或 refresh buffer, 这里的帧(frame)是指整个屏幕范围。</p>
+<p>帧缓存有个地址，是在内存里。我们通过不停的向FrameBuffer中写入数据，显示控制器就自动的从Frame Buffer中取数据并显示出来。全部的图形都共享内存中同一个帧缓存。</p>
+<p>看了以上内容，你应该对帧缓冲有了一定的认识，本文中就不对帧缓冲相关操作进行详细说明了，具体可以参考网上的相关资料，以下是操作帧缓冲的一般步骤：</p>
+<ol>
+<li>调用open函数打开/dev/fb设备文件。</li>
+<li>调用ioctrl函数取得当前显示屏幕的参数，如屏幕分辨率，每个像素点的比特数，并根据屏幕参数计算出屏幕缓冲区的大小。
+<li>调用mmap函数将屏幕缓冲区映射到用户空间。</li>
+<li>映射后就可以直接读写屏幕缓冲区，进行图形显示了。</li>
+</ol>
+<p>该怎么往帧缓冲里写数据才能看到自己想要的效果呢？举个例子：</p>
+<p>屏幕尺寸为320x240，像素比特数为32，要往坐标为(0,0)、尺寸为5x5的区域里填充白色，其代码段如下：<br>
+<div class="code_div"><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">point_x</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">0</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">point_y</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">0</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">rect_w</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">5</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">rect_h</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">5</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">screen_w</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">320</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">screen_h</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">240</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc16">unsigned</span><span class="sc0"> </span><span class="sc16">char</span><span class="sc0"> </span><span class="sc10">*</span><span class="sc11">fb_mem</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc11">帧缓冲首地址</span><span class="sc10">;</span><span class="sc0">
+</span><span class="sc5">for</span><span class="sc10">(</span><span class="sc11">y</span><span class="sc10">=</span><span class="sc11">point_y</span><span class="sc10">;</span><span class="sc0"> </span><span class="sc11">y</span><span class="sc10">&lt;</span><span class="sc11">rect_h</span><span class="sc10">;</span><span class="sc0"> </span><span class="sc10">++</span><span class="sc11">y</span><span class="sc10">)</span><span class="sc0"> </span><span class="sc10">{</span><span class="sc0">
+        </span><span class="sc5">for</span><span class="sc10">(</span><span class="sc11">x</span><span class="sc10">=</span><span class="sc11">point_x</span><span class="sc10">;</span><span class="sc0"> </span><span class="sc11">x</span><span class="sc10">&lt;</span><span class="sc11">rect_w</span><span class="sc10">;</span><span class="sc0"> </span><span class="sc10">++</span><span class="sc11">x</span><span class="sc10">)</span><span class="sc0"> </span><span class="sc10">{</span><span class="sc0">
+                </span><span class="sc2">// 因为是32比特，除以8就等于4(字节)
+</span><span class="sc0">                </span><span class="sc2">// y*screen_w+x 是将二维坐标(x,y)转换为一维坐标
+</span><span class="sc0">                </span><span class="sc2">// 将这个一维坐标乘以4，就等于当前坐标的像素点在内存中的首地址
+</span><span class="sc0">                </span><span class="sc11">fb_mem</span><span class="sc10">[(</span><span class="sc11">y</span><span class="sc10">*</span><span class="sc11">screen_w</span><span class="sc10">+</span><span class="sc11">x</span><span class="sc10">)*</span><span class="sc4">4</span><span class="sc10">]</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">255</span><span class="sc10">;</span><span class="sc0">
+                </span><span class="sc11">fb_mem</span><span class="sc10">[(</span><span class="sc11">y</span><span class="sc10">*</span><span class="sc11">screen_w</span><span class="sc10">+</span><span class="sc11">x</span><span class="sc10">)*</span><span class="sc4">4</span><span class="sc10">+</span><span class="sc4">1</span><span class="sc10">]</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">255</span><span class="sc10">;</span><span class="sc0">
+                </span><span class="sc11">fb_mem</span><span class="sc10">[(</span><span class="sc11">y</span><span class="sc10">*</span><span class="sc11">screen_w</span><span class="sc10">+</span><span class="sc11">x</span><span class="sc10">)*</span><span class="sc4">4</span><span class="sc10">+</span><span class="sc4">2</span><span class="sc10">]</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">255</span><span class="sc10">;</span><span class="sc0">
+        </span><span class="sc10">}</span><span class="sc0">
+</span><span class="sc10">}</span><span class="sc0">
+</span></div>
+省略了帧缓冲的初始化操作代码。
+</p>
+<p>在windows系统下，LCUI在初始化时会先开辟一段内存空间，作为帧缓冲，像素数据的写入方式和linux系统下的一样，只不过，由于图形是显示在windows窗口内的，因此，在重绘无效区域后，还需要将帧缓冲里的像素数据提交至windows窗口内，也就是调用windows系统提供的函数，将帧缓冲里的数据绘制到窗口内。为什么不直接在窗口内直接绘制图形呢？因为还没找到能用指针直接操作BITMAP的像素数据的方法，需要调用SetBitmapBits函数才能把BITMAP的像素数据覆盖掉。与其在每次重绘无效区域时调用SetBitmapBits函数，然后调用BitBlt函数绘制，不如在每次重绘完所有无效区域后调用SetBitmapBits函数和BitBlt函数一次性完成窗口内的图形重绘。</p>
+<p>虽然之前试过用DIBSection的确可以省掉SetBitmapBits函数的调用，但存在问题：图形显示异常。能够看到界面的“影子”，但不是正常的效果。</p>
+<p>
+Win32平台下的图形输出效率并不高，每次重绘屏幕内容时，都会重绘整个windows窗口内的图形。</p>
+<p>目前LCUI的图形是直接输出至windows窗口内的，有个想法：让LCUI的图形界面摆脱windows窗口，但问题是不知如何在windows下实现图层显示、图层控制功能。</p>
+<p>计划让LCUI支持linux环境下的Xwindow，这样就不用切换到控制台模式体验图形界面了。</p>
+<p>若你对此功能模块感兴趣，有不错的想法，可以向本项目提供技术支持。</p>
+<h2>无效区域</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/misc/rect.c</li>
+</ul>
+<p>无效区域主要由部件产生，当调用相关函数对部件进行移动、调整大小、更新、重绘等操作时，就会记录需要重绘的区域作为无效区域，以让GUI线程更新区域内的图形。</p>
+<p>为了减少重复的无效区域，在添加无效区域时，会检测该区域与已记录的区域 是否存在相交、包含和被包含的关系，如果是相交的，会对区域进行分割，把重复的相交区域删除；如果是包含，则删除记录中的区域；如果是被包含，则不添加该区域。</p>
+<p>下图是三个无效区域的分割处理过程。</p>
+<p><a href="images/area-split.png">
+	<img class="alignnone" title="区域分割" src="images/area-split.png"
+	alt="" width="696" height="350">
+</a></p>
+<p>添加第一个区域（红色），不做处理。添加第二个区域（绿色），灰色虚线所示的是分割线，将趋于分裂为三个子区域，然后移除一个与第一个区域重叠的子区域。添加第三个区域（蓝色），同上次一样的处理，只不过多进行了几次判断和分割处理。</p>
+<p>Windows系统的无效区域处理比LCUI更好，在程序调用BeginPaint()函数时，会将若干个挨着较紧密的区域合并成一个大区域。</p>
+<h2>GUI部件</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/gui/widget_base.c</li>
+<li>src/gui/widget_msg.c</li>
+<li>src/gui/widget_event.c</li>
+<li>src/gui/widget_style.c</li>
+</ul>
+<p>图形界面主要用于实现图形化的人机交互，用户使用鼠标、键盘向计算机输入数据，而计算机通过图形界面向用户反馈结果。</p>
+<p>在LCUI中，部件是组成图形界面的基本元素，不同类型的部件有不同的方式与用户进行交互。</p>
+<p>部件都有自己的属性，这些属性可以由开发者预先设置，也可以在程序运行后，让程序根据用户的操作来设置相应属性。</p>
+
+<h3>部件消息</h3>
+<p>部件的大部分操作是异步进行的，在设置部件的坐标、尺寸，或者重绘部件、更新数据等的时候，这些操作都会以消息的形式添加至部件的消息队列里，每个部件都有一个消息队列，队列中同种消息数量有限制，达到上限后，新添加的消息会覆盖已存在的消息，这是为了避免消息互相嵌套触发而导致的死循环的问题，也是为了减少冗余的同种消息。</p>
+<p>这些消息最终由GUI线程处理，它在更新部件时，会从父到子遍历部件中的消息队列，取出队列中的消息，然后根据消息编号，调用相应函数实现操作。</p>
+<p>LCUI的基本消息都由GUI线程处理并执行对应的操作，默认的消息都有相对应的处理方式，对于自定义的部件，有时需要对进行其它的处理，但又不想共用默认的消息，可以自定义的一个新的消息，反正就是一个新的消息编号而已，将回调函数与消息建立连接，就能响应自定义消息。例如label部件的文本内容设置功能就是用自定义消息实现的。</p>
+<p>考虑到部分部件操作耗时较长，为了避免耽误其它部件的处理，自定义消息不由GUI线程直接处理，而是转移至程序任务队列，让主线程在主循环中处理。<p>
+<p>部件有自己的互斥锁，以保证部件数据在操作时的完整性。在主循环中处理自定义消息时，若要对部件进行修改，建议锁上互斥锁，如果该锁已经被GUI线程锁住，则会阻塞等待直到解锁为止，使用完部件后，需要解除互斥锁。<p>
+<p>GUI线程在对部件进行更新、重绘、销毁时，会尝试锁住互斥锁，若不能锁住互斥锁，则跳过本次对该部件的更新/重绘处理，留到下次再处理，部件的移动、尺寸调整、显示、隐藏等操作不会受互斥锁的影响。<p>
+<h3>部件事件</h3>
+<p>LCUI为部件提供了事件机制，可让部件响应用户的输入，窗口的拖动、按钮的点击、文本框的文本输入等，都是通过响应事件来实现的。</p>
+<p>消息与事件有什么区别？其实并无多大差别，都是只要注册事件或消息的响应函数，就能在事件或消息产生时调用该函数。在其它GUI中，事件的响应函数是有返回值的，以确定该事件是否被处理，根据这个返回值再干其它事情，但在LCUI中，暂时没有这个需求。</p>
+<h3>部件样式</h3>
+<p>部件的样式可以定义在外置文件内，这样可以不在修改源代码并重新编译的情况下调整各个部件的样式。在程序运行时，需要调用相应函数先载入指定样式文件，后面创建的部件会应用样式文件中的样式。</p>
+<p>部件样式用文本描述，采用类CSS的语法，但目前功能还不完善，只支持定义部件的坐标、对齐方式、尺寸、背景图、背景色、边框，其它高级功能还未实现。如果你对此功能感兴趣，可参与此功能的完善。</p>
+<h2>图形处理</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/LCUI_Graph.c</li>
+<li>src/draw/line.c</li>
+<li>src/draw/border.c</li>
+<li>src/draw/smooth.c</li>
+<li>src/draw/rotate.c</li>
+<li>src/bmp/bmp.c</li>
+<li>src/bmp/jpeg.c</li>
+<li>src/bmp/load_image.c</li>
+<li>src/bmp/png.c</li>
+</ul>
+<p>LCUI具备基本的图形处理功能，例如：裁剪、叠加、覆盖等。除了这些功能外，src/draw/目录下还有实现其它图形绘制的源代码，但作者目前并不会在图形处理上面花费多少的精力，以后会考虑用其它图形处理函数库来实现高级的图形处理。</p>
+<p>LCUI支持从外置的图片文件中载入图像数据，目前支持的图片文件格式有：bmp、png和jpeg，其中png和jpeg图片的解码由libpng和jpeg函数库提供支持。</p>
+<p>当要使用一张图像中指定区域内的图像时，又不想用额外的内存空间保存从这张图像中截取出的图像，可以用图像的引用功能，在调用相关函数实现图像叠加、裁剪、覆盖等操作时，该函数会对源图像的引用区域内的像素数据进行操作。</p>
+<h2>字体</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/font/fontlibrary.c</li>
+<li>src/font/bitmapfont.c</li>
+</ul>
+<p>LCUI默认的字体渲染引擎是FreeType，在LCUI初始化时，会初始化字体数据库，该库用于记录字体文件信息及字体位图，默认会添加内置的字体位图；若设置的环境变量中指定了字体文件路径，则会载入该路径下的字体文件，载入成功则会设置该字体为默认字体。</p>
+<p>在绘制部件上的文字时，LCUI会先尝试从字体数据库中获取现成的字体位图，若获取失败，则会从字体文件中载入新的字体位图，并记录至库中。各个具备文本显示功能的部件，它们用到的字体位图都是库中的，库中的数据只有在退出LCUI时才会被销毁，部件的销毁并不会影响库中的记录。这样做是为了避免重复的字体位图占用多余的内存空间。</p>
+<h2>字符集</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/font/charset.c</li>
+</ul>
+<p>源文件的编码方式决定源代码中的字符串常量的编码方式，LCUI的字符编码转换功能还不完善，在linux系统下，依赖libiconv函数库进行编码转换，但只提供GB2312转Unicode编码；而在windows系统下，只有LCUI内置的UTF-8转Unicode的功能，因此，若在widnows下编译GB2312编码的源文件，运行程序时，界面中显示的文本可能会乱码。建议源文件使用UTF-8编码。</p>
+<h2>内存管理</h2>
+<p>0.14.0版本还未添加内存管理模块，计划在后续的版本中添加，主要封装内存分配与释放函数，可以记录各个内存块的信息，例如：大小、用途，可统计各个用途的内存块的总占用空间，这样就能得知哪些地方需要减少内存开销。为保持较高的效率，需要思考出合适的数据结构及算法，如果可以的话，顺便使该模块具备内存池的功能。</p>
+<h2>线程</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/thread/pthread/thread.c</li>
+<li>src/thread/pthread/mutex.c</li>
+<li>src/thread/win32/thread.c</li>
+<li>src/thread/win32/mutex.c</li>
+<li>src/thread/LCUI_Thread.c</li>
+</ul>
+<p>LCUI封装了linux和win32平台下的线程操作函数，函数的用法和pthread线程库的函数用法大致一样，线程操作函数分为两类：一类以_LCUIThread_为前缀名，一类以LCUIThread_为前缀名。</p>
+<p>前者可直接调用并正常实现功能，不需要先初始化LCUI。而后者需要初始化LCUI，最终的功能实现还是会调用前者。</p>
+<p>后者会记录各个线程的父子关系，在其它子线程内获取所属LCUI程序的ID时，就会通过查询这个记录得到程序ID。但目前LCUI程序都只有单个程序的记录，该功能体现出的作用不是很大，以后可能会有需要多个LCUI实例的LCUI程序，比如让一个LCUI程序作为“平台”，在该平台上以线程的方式运行多个LCUI程序。</p>
+<p>LCUI在退出并释放资源前，会先撤销记录中的线程，再对资源进行释放，因为需释放的资源可能正被其它线程使用，直接释放的话可能会导致程序运行异常。</p>
+<p>以后可能会考虑为此模块添加线程池的实现。</p>
+<h2>输入设备</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/input/keyboard.c</li>
+<li>src/input/mouse.c</li>
+<li>src/input/touchscreen.c</li>
+</ul>
+<p>在linux环境的控制台模式下，LCUI在初始化时会设置控制台为无缓冲无回显模式，按下按键后，会直接获取到输入缓冲区里的键值，但键盘事件还不完整，只能检测到哪个键被按下，不能检测哪个键被释放；之前用过一种方法，通过读取/dev/input/event3中的数据可以获得按键的状态，但是，有的设备上不一定是/dev/input/event3，后面的编号不确定，需要手动设定。在将该方法的测试程序移植到另一设备上后，却只能检测出哪个键被按下，可能是设备的键盘驱动问题。</p>
+<p>LCUI通过读取鼠标设备 /dev/input/mice 中的数据，能得到鼠标的相对坐标、左右键的状态，当数据有变化时，就会产生鼠标事件。但鼠标事件也有点不完整，无法获取中间键和滚轮的状态。</p>
+<p>在win32环境下，键盘和鼠标事件由LCUI根据系统给的现成消息而产生。</p>
+<h2>事件</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/kernel/event.c</li>
+</ul>
+<p>事件机制主要用于异步任务处理，如果有个任务需要进行，但又不想因直接进行该任务而耽误下一个任务的进行，就可以用事件机制来实现。先为并不是急需进行处理的任务设置一个ID，用于标识它，然后将它作为事件添加至事件队列，等待事件线程进行处理；要让这个事件能够被事件线程正确的处理，还需要将用于处理该操作的函数与该事件ID进行关联，这样，事件线程在处理该事件时，就会调用该函数。</p>
+<p>什么是异步任务处理？同步任务处理是在处理任务时，需要等待该任务处理完才能进行其它任务；而异步任务处理与之相反，无需等待任务处理完成就能进行其它任务，最终这些任务都会被处理完成。</p>
+<p>举个例子：</p>
+<p>异步任务处理就是你喊你朋友吃饭，你朋友说知道了，待会忙完会找你一起去吃饭，你现在还可去做别的事情。</p>
+<p>同步任务处理就是你喊你朋友吃饭，你朋友在忙，你就一直在那等，等你朋友忙完了，你们一起去吃饭，吃完了后你才可以做别的事情。</p>
+<h2>定时器</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/kernel/timer.c</li>
+</ul>
+<p>定时器主要用于需要在指定一段时间后执行的任务，起初，在为LCUI开发能够实现动画播放的ActiveBox部件时，实现了能够在每次等待都能更新至少一帧的功能，该功能可以让所有ActiveBox部件的动画帧的更新由一个线程处理，后来将该功能的代码独立了出来，作为LCUI的定时器的实现代码。</p>
+定时器线程的主要工作流程是：
+<ol>
+<li>从定时器列表中获取一个已启用的定时器，根据它所需暂停的时间进行暂停。</li>
+<li>对定时器列表中的其它定时器进行更新，将它们所需暂停的时间减去当前已经暂停过的时间。</li>
+<li>重置当前定时器的时间。</li>
+<li>根据列表中各个定时器的暂停时间，由短到长进行排序。</li>
+<li>将该定时器中的任务发给程序任务队列，让它在主循环中执行。</li>
+</ol>
+<h2>主循环</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/kernel/main.c</li>
+</ul>
+<p>主循环一般在主线程里执行，在调用LCUI_Main函数时，该函数会创建一个主循环，主要用于处理部件事件/消息的响应、定时器的响应。在win32平台下，主循环还负责处理win32消息，根据消息产生相应的LCUI事件。</p>
+<h2>输入法</h2>
+涉及到的源文件：<br>
+<ul>
+<li>src/LCUI_InputMethod.c</li>
+</ul>
+<h2>未完，待续。。。。。。</h2>
+</td></tr>
+</table>
+</center>
+<p><font size=-3>最后更新：2013-06-13</font></p>
+
+  </body>
+</html>
