@@ -143,6 +143,7 @@
 <p>Widget_New 函数只需要一个参数，该参数用于标识所要创建的部件的类型，参数为 "label" 表示的是创建标签类型的部件。</p>
 <p>我需要自定义标签部件上显示的文本，可以调用 Label_Text  函数来设置，通常，部件的操作函数，它的第一个参数是要操作的部件，Label_Text 函数的第二个参数就是用于设置标签部件上显示的文本，我需要显示"Hello,World!"，将该参数设置为"Hello,World!"即可。</p>
 <p>设置完部件后，需要调用 Widget_Show 函数将之显示出来，因为部件在创建出来的时候，默认是不可见的，需要手动设置它为可见。</p>
+<p>到最后，调用 LCUI_Main 函数进入主循环，该函数用于让程序处于运行状态，也就是避免让程序在执行上面的代码后直接退出，并执行 LCUI 分配给程序的任务，例如：定时器、部件事件响应、部件消息处理。在 LCUI 退出后，LCUI_Main 函数才会调用完成，并返回一个值，该值一般为0，你可以它的返回值作为 main 函数的返回值进行return。</p>
 <p>在此需要提醒一下，若你设置的文本中包含中文字符，那么，标签部件显示的文字可能会乱码，常量字符串中字符的编码，由源文件的编码方式决定。为了能够让中文字符能够正常显示，你需要用宽字符版本的 Label_TextW 函数，用法和 Label_Text 函数一样，只不过，第二个参数需要时宽字符串，你只需要在常量字符串前面加上 L 宏，像这样：</p>
 <div class="code_div"><span class="sc11">Label_TextW</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">hello_text</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"一段中文文本。"</span><span class="sc0"> </span><span class="sc10">);</span>
 </div>
@@ -279,6 +280,6 @@
 </h3>
 </center>
 
-<p><font size=-3>最后更新：2013-06-13</font></p>
+<p><font size=-3>最后更新：2013-06-14</font></p>
 </body>
 </html>
