@@ -144,7 +144,7 @@
 <p>我需要自定义标签部件上显示的文本，可以调用 Label_Text  函数来设置，通常，部件的操作函数，它的第一个参数是要操作的部件，Label_Text 函数的第二个参数就是用于设置标签部件上显示的文本，我们需要显示"Hello,World!"，将该参数设置为"Hello,World!"即可。</p>
 <p>设置完部件后，需要调用 Widget_Show 函数将之显示出来，因为部件在创建出来的时候，默认是不可见的，需要手动设置它为可见。</p>
 <p>到最后，调用 LCUI_Main 函数进入主循环，该函数用于让程序处于运行状态，也就是避免让程序在执行上面的代码后直接退出，并执行 LCUI 分配给程序的任务，例如：定时器、部件事件响应、部件消息处理。在 LCUI 退出后，LCUI_Main 函数才会调用完成，并返回一个值，该值一般为0，你可以它的返回值作为 main 函数的返回值进行return。</p>
-<p>在此需要提醒一下，Label_Text 函数默认是将设置的字符串视为UTF-8字符集的，若你设置的文本中包含中文字符，那么，标签部件显示的文字可能会乱码，常量字符串使用的何种字符集，由源文件的编码方式和编译器的处理方式决定。为了能够让中文字符能够正常显示，你需要用宽字符版本的 Label_TextW 函数，用法和 Label_Text 函数一样，只不过，第二个参数需要是宽字符串，你只需要在常量字符串前面加上 L 宏，像这样：</p>
+<p>在此需要提醒一下，Label_Text 函数默认是将设置的字符串视为UTF-8字符集的，若你设置的文本中包含中文字符，那么，标签部件显示的文字可能会乱码，常量字符串使用的何种字符集，与源文件的编码方式和编译器的处理方式有关。为了能够让中文字符能够正常显示，你需要用宽字符版本的 Label_TextW 函数，用法和 Label_Text 函数一样，只不过，第二个参数需要是宽字符串，你只需要在常量字符串前面加上 L 宏，像这样：</p>
 <div class="code_div"><span class="sc11">Label_TextW</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">hello_text</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"一段中文文本。"</span><span class="sc0"> </span><span class="sc10">);</span>
 </div>
 <p>若你使用的不是常量字符串，需要对字符串内容进行修改，并想将之显示在标签部件上，请使用宽字符版的字符串处理函数对字符串进行处理，以下是简短的示例：</p>
@@ -153,10 +153,10 @@
 
 </span><span class="sc11">wcscpy</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"一段中文文本。"</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
 </span><span class="sc11">wcscat</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"新增的文本。"</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
-</span><span class="sc11">swprintf</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">label_wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc5">sizeof</span><span class="sc10">(</span><span class="sc11">label_wstr</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc6">"%s 变量n的值为：%d。"</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">n</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
+</span><span class="sc11">swprintf</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">label_wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc5">sizeof</span><span class="sc10">(</span><span class="sc11">label_wstr</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc6">L"%s 变量n的值为：%d。"</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">n</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
 </span><span class="sc11">Label_TextW</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">widget</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">des_wstr</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
 </span></div>
-<p>上面的Hello,World程序运行后，屏幕左上角会显示一行“Hello,World!”文本，但是，怎么退出？抱歉，请强制终止该程序，因为还未写代码描述该程序需要在什么时候退出。</p>
+<p>好了，继续本章教程。上面的Hello,World程序在运行后，屏幕左上角会显示一行“Hello,World!”文本，但是，怎么退出？抱歉，请强制终止该程序，因为还未写代码描述该程序需要在什么时候退出。</p>
 <p>现在，我们需要一个窗口，让这个文本显示在窗口内。可以用窗口(Window)部件实现这个“窗口”，此窗口部件不是指窗口内的部件，而是指用于实现窗口的GUI部件。使用窗口部件前，需要包含 LC_WINDOW_H，以下是示例代码：</p>
 <div class="code_div"><span class="sc9">#include &lt;LCUI_Build.h&gt;
 #include LC_LCUI_H
@@ -188,7 +188,7 @@
 <p><img src="images/step1-img-01.png"></p>
       <hr>
     <h3>
-      4.&nbsp;设置部件的布局与事件响应
+      4.&nbsp;设置部件的布局，以及事件的响应
     </h3>
     <p>在运行了上个程序后，你会发现，点击窗口右上角的关闭按钮后，无法关闭窗口并退出程序。考虑到有些程序会需要在关闭按钮点击后干些其他事情，窗口部件在创建后，默认是不为该按钮关联事件的，我们可以使用 Widget_Event_Conncect 函数将回调函数与之事件连接，是该回调函数能够响应这个事件，在这里，我们需要响应点击事件，那么代码段如下：</p>
     <div class="code_div"><span class="sc10">......</span><span class="sc0">
@@ -271,7 +271,7 @@
 <p>在这一部分中，你已经学会了 LCUI 程序的基本编写方法，以及GUI部件的基本使用方法。</p>
 <p>另外有几点需要提醒：<br>
 在windows系统的VisualStudio 2012环境下，你需要在 #include <LCUI_Build.h> 这行代码前在定义一个宏：I_NEED_WINMAIN，该宏用于指示编译器在编译时，将LCUI头文件中的 WinMain 函数实现代码引入至当前源文件中，以确保编译出来的 win32 程序中有WinMain函数作为入口点。</p>
-<p>LCUI的头文件使用的是UTF-8编码方式，并且带有Unicode签名：BOM(Byte Order Mark)，像一些比较老的编译器，比如gcc 4.4.0之前的版本 和 VC++6.0的编译器，在编译时会将这Unicode签名视为未知字符而报错。在VisualStudio 2012环境下，建议使用UTF-8编码，并带BOM，因为VS2012的代码编辑器虽然能识别出UTF-8字符，但它的编译器却不会识别，加上BOM信息后才会识别UTF-8编码的源文件。</p>
+<p>LCUI的头文件使用的是UTF-8编码方式，并且带有Unicode签名：BOM(Byte Order Mark)，像一些比较老的编译器，比如gcc 4.4.0之前的版本 和 VC++6.0的编译器，在编译时会将这Unicode签名视为未知字符而报错。在VisualStudio 2012环境下，建议使用UTF-8编码，并带BOM签名，因为VS2012的代码编辑器虽然能识别出是UTF-8字符集的，但它的编译器会将文件内的字符视为本地字符集（如：GB2312）进行处理，而不是UTF-8字符集，在加上BOM信息后才会识别UTF-8编码的源文件。</p>
 <p>若你目前使用的是老版本编译器，并不想更换新的，但又想编译LCUI的源代码、或者编写LCUI程序，你可以用自己的方法将整个项目的源文件及头文件中的BOM信息去掉，这样可能就不会报错。</p>
 </td></tr>
 </table>
@@ -280,6 +280,6 @@
 </h3>
 </center>
 
-<p><font size=-3>最后更新：2013-06-20</font></p>
+<p><font size=-3>最后更新：2013-07-23</font></p>
 </body>
 </html>
