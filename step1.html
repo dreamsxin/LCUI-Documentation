@@ -190,7 +190,7 @@
     <h3>
       4.&nbsp;设置部件的布局，以及事件的响应
     </h3>
-    <p>在运行了上个程序后，你会发现，点击窗口右上角的关闭按钮后，无法关闭窗口并退出程序。考虑到有些程序会需要在关闭按钮点击后干些其他事情，窗口部件在创建后，默认是不为该按钮关联事件的，我们可以使用 Widget_Event_Conncect 函数将回调函数与之事件连接，是该回调函数能够响应这个事件，在这里，我们需要响应点击事件，那么代码段如下：</p>
+    <p>在运行了上个程序后，你会发现，点击窗口右上角的关闭按钮后，无法关闭窗口并退出程序。考虑到有些程序会需要在关闭按钮点击后干些其他事情，窗口部件在创建后，默认是不为该按钮关联事件的，我们可以使用 Widget_Event_Conncect 函数将回调函数与之事件连接，使该回调函数能够响应这个事件，在这里，我们需要响应点击事件，那么代码段如下：</p>
     <div class="code_div"><span class="sc10">......</span><span class="sc0">
 </span><span class="sc16">void</span><span class="sc0"> </span><span class="sc11">button_clicked</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">LCUI_Widget</span><span class="sc0"> </span><span class="sc10">*</span><span class="sc11">button</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">LCUI_WidgetEvent</span><span class="sc0"> </span><span class="sc10">*</span><span class="sc11">event_data</span><span class="sc0"> </span><span class="sc10">)</span><span class="sc0">
 </span><span class="sc10">{</span><span class="sc0">
@@ -281,6 +281,6 @@
 </h3>
 </center>
 
-<p><font size=-3>最后更新：2013-07-23</font></p>
+<p><font size=-3>最后更新：2013-10-11</font></p>
 </body>
 </html>
