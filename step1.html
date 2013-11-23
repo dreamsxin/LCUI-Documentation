@@ -202,13 +202,13 @@
         </span><span class="sc10">......</span><span class="sc0">
         </span><span class="sc11">LCUI_Init</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc4">0</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc4">0</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc4">0</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
         </span><span class="sc10">......</span><span class="sc0">
-        </span><span class="sc11">Widget_Event_Connect</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">Window_GetCloseButton</span><span class="sc10">(</span><span class="sc11">window</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc11">EVENT_CLICKED</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">button_clicked</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
+        </span><span class="sc11">Widget_ConnectEvent</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">Window_GetCloseButton</span><span class="sc10">(</span><span class="sc11">window</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc11">EVENT_CLICKED</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">button_clicked</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
         </span><span class="sc10">......</span><span class="sc0">
         </span><span class="sc5">return</span><span class="sc0"> </span><span class="sc11">LCUI_Main</span><span class="sc10">();</span><span class="sc0">
 </span><span class="sc10">}</span><span class="sc0">
 </span></div>
 <p>响应部件事件的回调函数，其返回值、参数个数、参数类型必须和上面的 button_clicked 函数一样。</p>
-<p>要关联关闭按钮的点击事件，需要调用 Window_GetCloseButton 函数获取窗口的关闭按钮，再调用 Widget_Event_Connect 函数为该按钮关联事件。由于关联的是点击事件，那么第二个参数就指定事件ID为EVENT_CLICKED，第三个参数则是回调函数的名字。</p>
+<p>要关联关闭按钮的点击事件，需要调用 Window_GetCloseButton 函数获取窗口的关闭按钮，再调用 Widget_ConnectEvent 函数为该按钮关联事件。由于关联的是点击事件，那么第二个参数就指定事件ID为EVENT_CLICKED，第三个参数则是回调函数的名字。</p>
 <p>部件的布局可以调整，我们可以将标签部件设置为居中显示，其代码段如下：</p>
 <div class="code_div"><span class="sc11">Widget_SetAlign</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">hello_text</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">ALIGN_MIDDLE_CENTER</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">Pos</span><span class="sc10">(</span><span class="sc4">0</span><span class="sc10">,</span><span class="sc4">0</span><span class="sc10">)</span><span class="sc0"> </span><span class="sc10">);</span></div>
 <p>用到的是 Widget_SetAlign 函数，第二个参数 ALIGIN_MIDDLE_CENTER 指的是居中，还有其他对齐方式，你可以查看头文件中的定义，在此不做过多说明。而第三个参数 Pos(0,0) 指的是偏移坐标，由于我们需要的是完全居中，不需要在居中的基础上调整坐标，因此坐标设为(0,0)。</p>
@@ -257,7 +257,7 @@
                 </span><span class="sc6">L"&lt;color=0,0,255&gt;！&lt;/color&gt;\n&lt;/size&gt;"</span><span class="sc10">);</span><span class="sc0">
                 
         </span><span class="sc11">Widget_Resize</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">window</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">Size</span><span class="sc10">(</span><span class="sc4">320</span><span class="sc10">,</span><span class="sc4">240</span><span class="sc10">)</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
-        </span><span class="sc11">Widget_Event_Connect</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">Window_GetCloseButton</span><span class="sc10">(</span><span class="sc11">window</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc11">EVENT_CLICKED</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">button_clicked</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
+        </span><span class="sc11">Widget_ConnectEvent</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">Window_GetCloseButton</span><span class="sc10">(</span><span class="sc11">window</span><span class="sc10">),</span><span class="sc0"> </span><span class="sc11">EVENT_CLICKED</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">button_clicked</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
         </span><span class="sc11">Widget_SetAlign</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">hello_text</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">ALIGN_MIDDLE_CENTER</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc11">Pos</span><span class="sc10">(</span><span class="sc4">0</span><span class="sc10">,</span><span class="sc4">0</span><span class="sc10">)</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
         </span><span class="sc11">Widget_Show</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">hello_text</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
         </span><span class="sc11">Widget_Show</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">window</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
@@ -279,8 +279,8 @@
 <h3 align=center>
   <a href="step2.html">LCUI 教程 — 第二章</a>
 </h3>
+<hr>
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/"><img alt="知识共享许可协议" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/3.0/cn/88x31.png" /></a><br />本作品采用 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/">知识共享署名-非商业性使用-相同方式共享 3.0 中国大陆许可协议</a> 进行许可。
 </center>
-
-<p><font size=-3>最后更新：2013-10-11</font></p>
 </body>
 </html>
