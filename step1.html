@@ -26,8 +26,7 @@
     (<a href="http://www.lcui.org">www.lcui.org</a>)
 </h3>
 
-<center>
-<table width="70%">
+<table width="70%" style="margin: 0 auto">
 <tr><td>
 
   <hr>
@@ -149,7 +148,7 @@
 </div>
 <p>若你使用的不是常量字符串，需要对字符串内容进行修改，并想将之显示在标签部件上，请使用宽字符版的字符串处理函数对字符串进行处理，以下是简短的示例：</p>
 <div class="code_div"><span class="sc16">int</span><span class="sc0"> </span><span class="sc11">n</span><span class="sc0"> </span><span class="sc10">=</span><span class="sc0"> </span><span class="sc4">100</span><span class="sc10">;</span><span class="sc0">
-</span><span class="sc11">whcar_t</span><span class="sc0"> </span><span class="sc11">label_wstr</span><span class="sc10">[</span><span class="sc4">100</span><span class="sc10">],</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">[</span><span class="sc4">100</span><span class="sc10">];</span><span class="sc0">
+</span><span class="sc11">wchar_t</span><span class="sc0"> </span><span class="sc11">label_wstr</span><span class="sc10">[</span><span class="sc4">100</span><span class="sc10">],</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">[</span><span class="sc4">100</span><span class="sc10">];</span><span class="sc0">
 
 </span><span class="sc11">wcscpy</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"一段中文文本。"</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
 </span><span class="sc11">wcscat</span><span class="sc10">(</span><span class="sc0"> </span><span class="sc11">wstr</span><span class="sc10">,</span><span class="sc0"> </span><span class="sc6">L"新增的文本。"</span><span class="sc0"> </span><span class="sc10">);</span><span class="sc0">
@@ -275,12 +274,16 @@
 <p>在VisualStudio 2012环境下，建议使用UTF-8编码保存头文件和源文件，并带BOM签名，因为VS2012的代码编辑器虽然能识别出是UTF-8字符集的，但它的编译器会将文件内的字符视为本地字符集（如：GB2312）进行处理，而不是UTF-8字符集。在加上BOM信息后，编译器才会识别UTF-8编码的文件中的字符。</p>
 <p>若你目前使用的是老版本编译器，并不想更换新的，但又想编译LCUI的源代码、或者编写LCUI程序，你可以用自己的方法将整个项目的源文件及头文件中的BOM信息去掉，这样可能就不会报错。</p>
 </td></tr>
+<tr><td>
+<hr>
+<table width="100%">
+<tr width="100%"><td align=left>最后更新: 2013-12-10</td><td align=right><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/"><img alt="知识共享许可协议" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/3.0/cn/88x31.png"></a></td></tr>
+</table>
+<hr>
+</td></tr>
 </table>
 <h3 align=center>
   <a href="step2.html">LCUI 教程 — 第二章</a>
 </h3>
-<hr>
-<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/"><img alt="知识共享许可协议" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/3.0/cn/88x31.png" /></a><br />本作品采用 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/">知识共享署名-非商业性使用-相同方式共享 3.0 中国大陆许可协议</a> 进行许可。
-</center>
 </body>
 </html>
